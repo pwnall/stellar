@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = "stellar"
-  s.version = "0.1.0"
+  s.version = "0.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Victor Costan"]
@@ -39,7 +39,9 @@ Gem::Specification.new do |s|
     "spec/stellar/courses_spec.rb",
     "spec/stellar/homework_spec.rb",
     "spec/stellar/homework_submissions_spec.rb",
-    "spec/support/test-credentials.rb"
+    "spec/stellar_spec.rb",
+    "spec/support/test-credentials.rb",
+    "stellar.gemspec"
   ]
   s.homepage = "http://github.com/pwnall/stellar"
   s.licenses = ["MIT"]
