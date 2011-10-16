@@ -55,7 +55,10 @@ file krb_file do
   kerberos[:user] = ask('MIT Kerberos Username: ') { |q| q.echo = true }
   kerberos[:pass] = ask('MIT Kerberos Password: ') { |q| q.echo = '*' }
   kerberos[:mit_id] = ask('MIT ID: ') { |q| q.echo = true }
-  File.open(krb_file, 'w') {|f| f.write [kerberos.to_yaml].pack('m') }
+  # Verify the MIT information by trying to get a certificate.
+  if Stellar::Auth.get_certificate kerberos
+    File.open(krb_file, 'w') {|f| f.write [kerberos.to_yaml].pack('m') }
+  end
 end
 task :fixtures => krb_file
 
