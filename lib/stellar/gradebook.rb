@@ -1,30 +1,61 @@
 # :nodoc: namespace
 module Stellar
 
-# Homework listing functionality.
-class HomeworkList
-  # Creates a Stellar client scoped to a course's Homework module.
+# Gradebook functionality.
+class Gradebook
+  # Maps the text in navigation links to URI objects.
   #
-  # @param [Stellar::Course] the course whose homework is desired
+  # Example: navigation['Homework'] => <# URI: .../ >
+  attr_reader :navigation
+  
+  # Generic Stellar client used to make requests.
+  attr_reader :client
+  
+  # Creates a Stellar client scoped to a course's Gradebook module.
+  #
+  # @param [Stellar::Course] the course whose gradebook is desired
   def initialize(course)
     @course = course
     @client = course.client
-    @url = course.navigation['Homework']
+    @url = course.navigation['Gradebook']
     
     page = @client.get_nokogiri @url
-    @assignments = page.css('#content a[href*="assignment"]').map { |link|
-      name = link.inner_text
-      url = URI.join page.url, link['href']
-      begin
-        Stellar::Homework.new url, name, course
-      rescue ArgumentError
-        nil
-      end
-    }.reject(&:nil?)
+    nav_keys = page.css('#toolBox.dashboard dt').map(&:inner_text)
+    nav_links = page.css('#toolBox.dashboard dd a').map(&:inner_text)
+    @navigation = Hash[page.css('#toolBox.dashboard').map { |link|
+      [link.inner_text, URI.join(page.url, link['href'])]
+    }]
   end
 
-  # All assignments in this course's homework module.
-  # @return [Array<Stellar::Homework>] list of assignments posted by this course 
+  # All assignments in this course's Gradebook module.
+  # @return [Stellar::Gradebook::AssignmentList] list of assignments in this
+  #     gradebook
+  def assignments
+    @assignments ||= Stellar::Gradebook::AssignmentList.new self
+  end  
+end  # class Stellar::Gradebook
+
+# Collection of assignments in the Stellar gradebook.
+class AssignmentList
+  # Generic Stellar client used to make requests.
+  attr_reader :client
+  
+  # Creates a list of Gradebook assignments for a class.
+  #
+  # @param [Stellar::Gradebook] gradebook client scoped to a course's gradebook
+  def initialize(gradebook)
+    @gradebook = gradebook
+    @client = gradebook.client
+    
+    @url = gradebook.navigation['Assignments']
+    assignment_page = @client.get_nokogiri @url
+    
+    @assignments = assignment_page.css('table.gradesTable tbody tr').map { |row|
+    }.reject(&:nil?)
+  end
+  
+  # All assignments in this course's Gradebook module.
+  # @return [Array<Stellar::Gradebook>] list of assignments posted by this course 
   def all
     @assignments
   end
@@ -35,11 +66,11 @@ class HomeworkList
   #     such assignment exists 
   def named(name)
     @assignments.find { |a| a.name == name }
-  end
-end  # class Stellar::HomeworkList
+  end  
+end  # class Stellar::Gradebook::AssignmentList
 
-# One assignment in the homework tab.
-class Homework
+# One assignment in the Gradebook tab.
+class Gradebook
   # Assignment name.
   attr_reader :name
   
@@ -62,7 +93,7 @@ class Homework
     
     page = @client.get_nokogiri @url
     unless page.css('#content p b').any? { |dom| dom.inner_text.strip == name }
-      raise ArgumentError, 'Invalid homework page URL'
+      raise ArgumentError, 'Invalid Gradebook page URL'
     end
   end
   
@@ -71,7 +102,7 @@ class Homework
     page = @client.get_nokogiri @url
     @submissions ||= page.css('.gradeTable tbody tr').map { |tr|
       begin
-        Stellar::Homework::Submission.new tr, self
+        Stellar::Gradebook::Submission.new tr, self
       rescue ArgumentError
         nil
       end
@@ -92,22 +123,22 @@ class Submission
   # Comments posted on this submission.
   attr_reader :comments
   
-  # Homework that the submission belongs to.
-  attr_reader :homework
+  # Gradebook that the submission belongs to.
+  attr_reader :Gradebook
   
   # Generic Stellar client used to make requests.
   attr_reader :client
   
-  # Creates a submission from a <tr> element in the Stellar homework page.
+  # Creates a submission from a <tr> element in the Stellar Gradebook page.
   #
   # @param [Nokogiri::XML::Element]
-  def initialize(tr, homework)
+  def initialize(tr, Gradebook)
     link = tr.css('a').find { |link| /submission\s+details/ =~ link.inner_text }
     raise ArgumentError, 'Invalid submission-listing <tr>' unless link
 
     @url = URI.join tr.document.url, link['href']
-    @homework = homework
-    @client = homework.client
+    @Gradebook = Gradebook
+    @client = Gradebook.client
     
     page = @client.get_nokogiri @url
 
@@ -117,7 +148,7 @@ class Submission
     @name = author_link.inner_text
     @email = author_link['href'].sub /^mailto:/, ''
     @file_url = page.css('#rosterBox a[href*="studentWork"]').map { |link|
-      next nil unless link.inner_text == homework.name
+      next nil unless link.inner_text == Gradebook.name
       URI.join @url.to_s, link['href']
     }.reject(&:nil?).first
     
@@ -142,7 +173,7 @@ class Submission
   #     examples: 'text/plain', 'application/pdf'
   # @param [String] file_name name of the file attached to the comment; by 
   #     default, 'attachment.txt'
-  # @return [Stellar::Homework::Submission] self
+  # @return [Stellar::Gradebook::Submission] self
   def add_comment(text, file_data = nil, file_mime_type = 'text/plain',
                   file_name = 'attachment.txt')
     add_page = @client.get @add_comment_url
@@ -235,10 +266,10 @@ class Comment
   def attachment_data
     @attachment_url && @client.get_file(@attachment_url)
   end
-end  # class Stellar::Homework::Submission::Comment
+end  # class Stellar::Gradebook::Submission::Comment
   
-end  # class Stellar::Homework::Submission
+end  # class Stellar::Gradebook::Submission
 
-end  # class Stellar::Homework
+end  # class Stellar::Gradebook
 
 end  # namespace Stellar
