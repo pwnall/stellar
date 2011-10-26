@@ -51,6 +51,9 @@ task :spec => :fixtures
 
 krb_file = 'spec/fixtures/kerberos.b64'
 file krb_file do
+  $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'lib'))
+  require 'stellar'
+
   kerberos = {}
   kerberos[:user] = ask('MIT Kerberos Username: ') { |q| q.echo = true }
   kerberos[:pass] = ask('MIT Kerberos Password: ') { |q| q.echo = '*' }

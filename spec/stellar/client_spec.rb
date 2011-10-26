@@ -36,7 +36,9 @@ describe Stellar::Client do
 
     describe 'with bad Kerberos credentials' do
       it 'should raise ArgumentError' do
-        client.auth :kerberos => test_mit_kerberos.merge(:pass => 'fail')
+        lambda {
+          client.auth :kerberos => test_mit_kerberos.merge(:pass => 'fail')
+        }.should raise_error(ArgumentError)
       end
     end
   end

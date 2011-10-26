@@ -15,10 +15,13 @@ class Client
   end
   
   # New Mechanize instance.
-  def mech
-    m = Mechanize.new
-    m.ca_file = mitca_path
-    m.user_agent_alias = 'Linux Firefox'
+  def mech(&block)
+    m = Mechanize.new do |m|
+      # m.ca_file = mitca_path
+      m.user_agent_alias = 'Linux Firefox'
+      yield m if block
+      m
+    end
     m
   end
 

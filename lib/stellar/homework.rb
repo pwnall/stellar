@@ -102,7 +102,9 @@ class Submission
   #
   # @param [Nokogiri::XML::Element]
   def initialize(tr, homework)
-    link = tr.css('a').find { |link| /submission\s+details/ =~ link.inner_text }
+    link = tr.css('a').find do |link|
+      (/^\s*\d+\s*$/ =~ link.inner_text) && !(/grade/ =~ link['href'])
+    end
     raise ArgumentError, 'Invalid submission-listing <tr>' unless link
 
     @url = URI.join tr.document.url, link['href']

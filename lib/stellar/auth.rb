@@ -18,33 +18,24 @@ module Auth
   #     with :user and :pass keys
   # @return [Stellar::Client] self, for convenient method chaining
   def auth(options = {})
-    # Reset any prior credentials.
-    @mech = mech
+    # Create new Mechanize instance to drop any old credentials.
+    
     if options[:cert]
-      log = Logger.new(STDERR)
-      log.level = Logger::INFO
-      @mech.log = log
-      
       key = options[:cert][:key]
-      if key.respond_to?(:to_str)
-        if File.exist?(key)
-          @mech.key = key
-        else
-          @mech.key = OpenSSL::PKey::RSA.new key
-        end
-      else
-        @mech.key = key
+      if key.respond_to?(:to_str) && !File.exist?(key)
+        key = OpenSSL::PKey::RSA.new key
       end
       cert = options[:cert][:cert]
-      if cert.respond_to?(:to_str)
-        if File.exist?(cert)
-          @mech.cert = cert
-        else
-          @mech.cert = OpenSSL::X509::Certificate.new cert
-        end
-      else
-        @mech.cert = cert
+      if cert.respond_to?(:to_str) && !File.exist?(cert)
+        cert = OpenSSL::X509::Certificate.new cert
       end
+      
+      @mech = mech do |m|
+        m.key = key
+        m.cert = cert
+      end
+    else
+      @mech = mech
     end
     
     # Go to a page that is guaranteed to redirect to shitoleth.
@@ -52,28 +43,25 @@ module Auth
     # Fill in the form.
     step1_form = step1_page.form_with :action => /WAYF/
     step1_form.checkbox_with(:name => /perm/).checked = :checked
-    step2_page = step1_form.submit
+    step2_page = step1_form.submit step1_form.buttons.first
     # Click through the stupid confirmation form.
     step2_form = step2_page.form_with :action => /WAYF/
-    cred_page = step2_form.submit
+    cred_page = step2_form.submit step2_form.button_with(:name => /select/i)
     
     # Fill in the credentials form.
     if options[:cert]
       cred_form = cred_page.form_with :action => /certificate/i
       cred_form.checkbox_with(:name => /pref/).checked = :checked
-      puts cred_form
-      puts cred_form.submit(cred_form.buttons.first).body
-      return
     elsif options[:kerberos]
       cred_form = cred_page.form_with :action => /username/i
       cred_form.field_with(:name => /user/).value = options[:kerberos][:user]
       cred_form.field_with(:name => /pass/).value = options[:kerberos][:pass]
     else
-      raise 'Unsupported credentials'
+      raise ArgumentError, 'Unsupported credentials'
     end
     
     # Click through the SAML response form.
-    saml_page = cred_form.submit
+    saml_page = cred_form.submit cred_form.buttons.first
     unless saml_form = saml_page.form_with(:action => /SAML/)
       raise ArgumentError, 'Authentication failed due to invalid credentials'
     end
@@ -101,9 +89,10 @@ module Auth
     # @return [Hash] a Hash with a :cert key (the OpenSSL::X509::Certificate)
     #     and a :key key (the matching OpenSSL::PKey::PKey private key)
     def get_certificate(kerberos)
-      mech = Mechanize.new
-      mech.ca_file = mitca_path
-      mech.user_agent_alias = 'Linux Firefox'
+      mech = Mechanize.new do |m|
+        m.user_agent_alias = 'Linux Firefox'
+        # NOTE: ca.mit.edu uses a Geotrust certificate, not the self-signed one
+      end
       login_page = mech.get 'https://ca.mit.edu/ca/'
       login_form = login_page.form_with :action => /login/
       login_form.field_with(:name => /login/).value = kerberos[:user]
