@@ -53,8 +53,12 @@ class AssignmentList
     @url = gradebook.navigation['Assignments']
     assignment_page = @client.get_nokogiri @url
     
-    @assignments = assignment_page.css('table.gradesTable tbody tr').map { |row|
-      
+    @assignments = assignment_page.css('.gradeTable tbody tr').map { |tr|
+      begin
+        Stellar::Gradebook::Assignment.new tr, self
+      rescue ArgumentError
+        nil
+      end
     }.reject(&:nil?)
   end
   
@@ -98,12 +102,11 @@ class Assignment
     @gradebook = gradebook
     @client = gradebook.client
     
-    
-    
-    page = @client.get_nokogiri @url
-    unless page.css('#content p b').any? { |dom| dom.inner_text.strip == name }
-      raise ArgumentError, 'Invalid Gradebook page URL'
-    end
+    link = tr.css('a[href*=".html"]').find { |link| link.css('img').empty? }
+    p [link, tr, tr.document.url]
+    raise ArgumentError, 'Invalid assignment-listing <tr>' unless link
+    @name = link.inner_text
+    @url = URI.join tr.document.url, link['href']
   end
   
   # List of submissions associated with this problem set.
