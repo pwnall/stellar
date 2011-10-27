@@ -4,6 +4,7 @@ source :rubygems
 gem 'mechanize', '>= 2.0.2'
 gem 'nokogiri', '>= 1.5.0'
 
+
 # Add dependencies to develop your gem here.
 # Include everything needed to run rake, tests, features, etc.
 group :development do
@@ -18,4 +19,7 @@ group :development do
   gem 'ruby-debug19', :platform => :mri_19
 
   gem 'highline', '>= 1.6.2'
+  
+  # MRI 1.9 has JSON in the standard library.
+  gem 'json', :platform => :mri_18
 end

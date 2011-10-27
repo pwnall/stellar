@@ -3,6 +3,7 @@ require 'openssl'
 require 'uri'
 
 # Gems.
+require 'json'
 require 'nokogiri'
 require 'mechanize'
 

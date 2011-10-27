@@ -51,20 +51,12 @@ class AssignmentList
     @client = gradebook.client
     
     @url = gradebook.navigation['Assignments']
-    assignment_page = @client.get_nokogiri @url
-    
-    @assignments = assignment_page.css('.gradeTable tbody tr').map { |tr|
-      begin
-        Stellar::Gradebook::Assignment.new tr, self
-      rescue ArgumentError
-        nil
-      end
-    }.reject(&:nil?)
+    reload!
   end
   
   # All assignments in this course's Gradebook module.
-  # @return [Array<Stellar::Gradebook>] list of assignments posted by this
-  #     course 
+  # @return [Array<Stellar::Gradebook::Assignment>] list of assignments posted
+  #     by this course 
   def all
     @assignments
   end
@@ -75,7 +67,47 @@ class AssignmentList
   #     such assignment exists 
   def named(name)
     @assignments.find { |a| a.name == name }
-  end  
+  end
+  
+  # Reloads the contents of this assignment list.
+  #
+  # @return [Stellar::Gradebook::AssignmentList] self, for easy call chaining
+  def reload!
+    assignment_page = @client.get_nokogiri @url
+    
+    @assignments = assignment_page.css('.gradeTable tbody tr').map { |tr|
+      begin
+        Stellar::Gradebook::Assignment.new tr, self
+      rescue ArgumentError
+        nil
+      end
+    }.reject(&:nil?)
+    
+    self
+  end
+  
+  # Creates a new assignment in the Gradebook.
+  #
+  # @param [String] long_name the assignment's full name
+  # @param [String] short_name a shorter name?
+  # @param [Numeric] max_score maximum score that a student can receive
+  # @param [Time] due_on date when the pset is due
+  # @param [Numeric] weight score weight in total score for the course
+  # @return [Stellar::Gradebook::AssignmentList] self, for easy call chaining
+  def add(long_name, short_name, max_points, due_on = Time.today, weight = nil)
+    add_page = @client.get @gradebook.navigation['Add Assignment']
+    add_form = add_page.form_with :action => /new/i
+    add_form.field_with(:name => /title/i).value = long_name
+    add_form.field_with(:name => /short/i).value = short_name
+    add_form.field_with(:name => /points/i).value = max_points.to_s
+    add_form.field_with(:name => /short/i).value = due_on.strftime('%m.%d.%Y')
+    if weight
+      add_form.field_with(:name => /weight/i).value = weight.to_s
+    end
+    add_form.submit add_form.button_with(:class => /active/)
+    
+    reload!
+  end
 end  # class Stellar::Gradebook::AssignmentList
 
 # One assignment in the Gradebook tab.
@@ -85,6 +117,11 @@ class Assignment
   
   # URL of the assignment's main page.
   attr_reader :url
+  
+  # True if the homework was deleted.
+  attr_reader :deleted
+  # True if the homework was deleted.
+  alias_method :deleted?, :deleted
   
   # The gradebook that this assignment is in.
   attr_reader :gradebook
@@ -103,24 +140,156 @@ class Assignment
     @client = gradebook.client
     
     link = tr.css('a[href*=".html"]').find { |link| link.css('img').empty? }
-    p [link, tr, tr.document.url]
     raise ArgumentError, 'Invalid assignment-listing <tr>' unless link
     @name = link.inner_text
     @url = URI.join tr.document.url, link['href']
+    
+    page = client.get_nokogiri @url
+    summary_table = page.css('.gradeTable').find do |table|
+      /summary/i =~ table.css('caption').inner_text
+    end
+    raise ArgumentError, 'Invalid assignment-listing <tr>' unless summary_table
+    
+    edit_link = summary_table.css('tbody tr a[href*="edit"]').first
+    raise ArgumentError, 'Invalid assignment-listing <tr>' unless edit_link
+    @edit_url = URI.join @url.to_s, edit_link['href']
+    
+    @deleted = false
   end
   
-  # List of submissions associated with this problem set.
-  def submissions
-    page = @client.get_nokogiri @url
-    @submissions ||= page.css('.gradeTable tbody tr').map { |tr|
+  # Deletes this assignment from the Gradebook.
+  def delete!
+    return if @deleted
+    
+    edit_page = @client.get @edit_url
+    edit_form = edit_page.form_with :action => /edit/i
+    confirm_page = edit_form.submit edit_form.button_with(:name => /del/i)
+    
+    @deleted = true
+    self
+  end
+end  # class Stellar::Gradebook::Assignment
+
+# Collection of students in a course's Gradebook module.
+class StudentList
+  # The course's 
+  attr_reader :gradebook
+  
+  # Generic Stellar client used to make requests.
+  attr_reader :client
+  
+  # Creates a list of students in a class' Gradebook.
+  #
+  # @param [Stellar::Gradebook] gradebook client scoped to a course's Gradebook
+  def initialize(gradebook)
+    @gradebook = gradebook
+    @client = gradebook.client
+    
+    @url = gradebook.navigation['Students']
+    reload!
+  end
+  
+  # All students listed in this course's Gradebook module.
+  # @return [Array<Stellar::Gradebook::Student>] list of students in this course
+  def all
+    @students
+  end
+  
+  # An assignment in the course's homework module.
+  # @param [String] name the name of the desired assignment
+  # @return [Stellar::Homework] a student with the given name, or nil if no such
+  #     student exists
+  def named(name)
+    @students.find { |a| a.name == name }
+  end
+  
+  # Reloads the contents of this student list.
+  #
+  # @return [Stellar::Gradebook::StudentList] self, for easy call chaining
+  def reload!
+    student_page = @client.get_nokogiri @url
+    
+    data_script = student_page.css('script').find do |script|
+      /row\s*\=.*\;/ =~ script.inner_text
+    end
+    data = JSON.parse (/row\s*\=([^;]*)\;/).match(data_script.inner_text)[1]
+    
+    @students = data.map { |student_line|
+      email = student_line[0]
+      url = URI.join @url.to_s, student_line[1]
+      name = student_line[2].split(',', 2).map(&:strip).reverse.join(' ')
+      
       begin
-        Stellar::Gradebook::Submission.new tr, self
+        Stellar::Gradebook::Student.new tr, self
       rescue ArgumentError
         nil
       end
     }.reject(&:nil?)
+    
+    self
+  end
+end  # class Stellar::Gradebook::StudentsList
+
+# One assignment in the Gradebook tab.
+class Assignment
+  # Assignment name.
+  attr_reader :name
+  
+  # URL of the assignment's main page.
+  attr_reader :url
+  
+  # True if the homework was deleted.
+  attr_reader :deleted
+  # True if the homework was deleted.
+  alias_method :deleted?, :deleted
+  
+  # The gradebook that this assignment is in.
+  attr_reader :gradebook
+  
+  # Generic Stellar client used to make requests.
+  attr_reader :client
+  
+  # Creates a submission from a <tr> element in the Gradebook assignments page.
+  #
+  # @param [Nokogiri::XML::Element] tr a <tr> element in the Gradebook
+  #     assignments page describing this assignment
+  # @param [Stellar::Gradebook] gradebook Stellar client scoped to the
+  #     course gradebook containing this assignment
+  def initialize(tr, gradebook)
+    @gradebook = gradebook
+    @client = gradebook.client
+    
+    link = tr.css('a[href*=".html"]').find { |link| link.css('img').empty? }
+    raise ArgumentError, 'Invalid assignment-listing <tr>' unless link
+    @name = link.inner_text
+    @url = URI.join tr.document.url, link['href']
+    
+    page = client.get_nokogiri @url
+    summary_table = page.css('.gradeTable').find do |table|
+      /summary/i =~ table.css('caption').inner_text
+    end
+    raise ArgumentError, 'Invalid assignment-listing <tr>' unless summary_table
+    
+    edit_link = summary_table.css('tbody tr a[href*="edit"]').first
+    raise ArgumentError, 'Invalid assignment-listing <tr>' unless edit_link
+    @edit_url = URI.join @url.to_s, edit_link['href']
+    
+    @deleted = false
   end
   
+  # Deletes this assignment from the Gradebook.
+  def delete!
+    return if @deleted
+    
+    edit_page = @client.get @edit_url
+    edit_form = edit_page.form_with :action => /edit/i
+    confirm_page = edit_form.submit edit_form.button_with(:name => /del/i)
+    
+    @deleted = true
+    self
+  end
+end  # class Stellar::Gradebook::Assignment
+
 # A student's submission for an assignment.
 class Submission
   # URL to the last file that the student submitted.
@@ -211,6 +380,7 @@ class Submission
       Comment.new table, self
     }.reject(&:nil?)
   end
+  
 
 # A comment on a Stellar submission.
 class Comment
@@ -281,8 +451,6 @@ class Comment
 end  # class Stellar::Gradebook::Assignment::Submission::Comment
   
 end  # class Stellar::Gradebook::Assignment::Submission
-
-end  # class Stellar::Gradebook::Assignment
 
 end  # class Stellar::Gradebook
 
