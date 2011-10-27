@@ -79,6 +79,9 @@ class Assignment
   # Assignment name.
   attr_reader :name
   
+  # URL of the assignment's main page.
+  attr_reader :url
+  
   # The gradebook that this assignment is in.
   attr_reader :gradebook
   
@@ -91,11 +94,11 @@ class Assignment
   #     assignments page describing this assignment
   # @param [Stellar::Gradebook] gradebook Stellar client scoped to the
   #     course gradebook containing this assignment
-  def initialize(tr, course)
-    @name = name
-    @url = page_url
-    @course = course
-    @client = course.client
+  def initialize(tr, gradebook)
+    @gradebook = gradebook
+    @client = gradebook.client
+    
+    
     
     page = @client.get_nokogiri @url
     unless page.css('#content p b').any? { |dom| dom.inner_text.strip == name }
