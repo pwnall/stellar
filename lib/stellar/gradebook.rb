@@ -1,12 +1,15 @@
 # :nodoc: namespace
 module Stellar
 
-# Gradebook functionality.
+# Stellar client scoped to a course's Gradebook module.
 class Gradebook
   # Maps the text in navigation links to URI objects.
   #
   # Example: navigation['Homework'] => <# URI: .../ >
   attr_reader :navigation
+  
+  # The course whose Gradebook is exposed by this client.
+  attr_reader :course
   
   # Generic Stellar client used to make requests.
   attr_reader :client
@@ -20,9 +23,7 @@ class Gradebook
     @url = course.navigation['Gradebook']
     
     page = @client.get_nokogiri @url
-    nav_keys = page.css('#toolBox.dashboard dt').map(&:inner_text)
-    nav_links = page.css('#toolBox.dashboard dd a').map(&:inner_text)
-    @navigation = Hash[page.css('#toolBox.dashboard').map { |link|
+    @navigation = Hash[page.css('#toolBox.dashboard dd a').map { |link|
       [link.inner_text, URI.join(page.url, link['href'])]
     }]
   end
@@ -33,16 +34,18 @@ class Gradebook
   def assignments
     @assignments ||= Stellar::Gradebook::AssignmentList.new self
   end  
-end  # class Stellar::Gradebook
 
-# Collection of assignments in the Stellar gradebook.
+# Collection of assignments in a course's Gradebook module.
 class AssignmentList
+  # The course's 
+  attr_reader :gradebook
+  
   # Generic Stellar client used to make requests.
   attr_reader :client
   
   # Creates a list of Gradebook assignments for a class.
   #
-  # @param [Stellar::Gradebook] gradebook client scoped to a course's gradebook
+  # @param [Stellar::Gradebook] gradebook client scoped to a course's Gradebook
   def initialize(gradebook)
     @gradebook = gradebook
     @client = gradebook.client
@@ -51,11 +54,13 @@ class AssignmentList
     assignment_page = @client.get_nokogiri @url
     
     @assignments = assignment_page.css('table.gradesTable tbody tr').map { |row|
+      
     }.reject(&:nil?)
   end
   
   # All assignments in this course's Gradebook module.
-  # @return [Array<Stellar::Gradebook>] list of assignments posted by this course 
+  # @return [Array<Stellar::Gradebook>] list of assignments posted by this
+  #     course 
   def all
     @assignments
   end
@@ -70,22 +75,23 @@ class AssignmentList
 end  # class Stellar::Gradebook::AssignmentList
 
 # One assignment in the Gradebook tab.
-class Gradebook
+class Assignment
   # Assignment name.
   attr_reader :name
   
-  # The course that this assignment is for.
-  attr_reader :course
+  # The gradebook that this assignment is in.
+  attr_reader :gradebook
   
   # Generic Stellar client used to make requests.
   attr_reader :client
   
-  # Creates a Stellar client scoped to an assignment.
+  # Creates a submission from a <tr> element in the Gradebook assignments page.
   #
-  # @param [URI, String] page_url URL to the assignment's main Stellar page
-  # @param [String] assignment name, e.g. "name"
-  # @param [Course] the course that issued the assignment
-  def initialize(page_url, name, course)
+  # @param [Nokogiri::XML::Element] tr a <tr> element in the Gradebook
+  #     assignments page describing this assignment
+  # @param [Stellar::Gradebook] gradebook Stellar client scoped to the
+  #     course gradebook containing this assignment
+  def initialize(tr, course)
     @name = name
     @url = page_url
     @course = course
@@ -132,13 +138,13 @@ class Submission
   # Creates a submission from a <tr> element in the Stellar Gradebook page.
   #
   # @param [Nokogiri::XML::Element]
-  def initialize(tr, Gradebook)
+  def initialize(tr, gradebook)
     link = tr.css('a').find { |link| /submission\s+details/ =~ link.inner_text }
     raise ArgumentError, 'Invalid submission-listing <tr>' unless link
 
     @url = URI.join tr.document.url, link['href']
-    @Gradebook = Gradebook
-    @client = Gradebook.client
+    @gradebook = gradebook
+    @client = gradebook.client
     
     page = @client.get_nokogiri @url
 
@@ -148,7 +154,7 @@ class Submission
     @name = author_link.inner_text
     @email = author_link['href'].sub /^mailto:/, ''
     @file_url = page.css('#rosterBox a[href*="studentWork"]').map { |link|
-      next nil unless link.inner_text == Gradebook.name
+      next nil unless link.inner_text == gradebook.name
       URI.join @url.to_s, link['href']
     }.reject(&:nil?).first
     
@@ -266,9 +272,11 @@ class Comment
   def attachment_data
     @attachment_url && @client.get_file(@attachment_url)
   end
-end  # class Stellar::Gradebook::Submission::Comment
+end  # class Stellar::Gradebook::Assignment::Submission::Comment
   
-end  # class Stellar::Gradebook::Submission
+end  # class Stellar::Gradebook::Assignment::Submission
+
+end  # class Stellar::Gradebook::Assignment
 
 end  # class Stellar::Gradebook
 

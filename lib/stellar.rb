@@ -20,4 +20,5 @@ end  # namespace Stellar
 require 'stellar/auth.rb'
 require 'stellar/client.rb'
 require 'stellar/courses.rb'
+require 'stellar/gradebook.rb'
 require 'stellar/homework.rb'

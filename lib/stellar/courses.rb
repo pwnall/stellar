@@ -107,6 +107,11 @@ class Course
   def homework
     @homework ||= Stellar::HomeworkList.new self
   end
+  
+  # Client scoped to the course's Gradebook module.
+  def gradebook
+    @gradebook ||= Stellar::Gradebook.new self
+  end
 end  # class Stellar::Course
 
 end  # namespace Stellar

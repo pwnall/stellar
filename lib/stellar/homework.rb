@@ -100,7 +100,10 @@ class Submission
   
   # Creates a submission from a <tr> element in the Stellar homework page.
   #
-  # @param [Nokogiri::XML::Element]
+  # @param [Nokogiri::XML::Element] tr a <tr> element in the Stellar homework
+  #     page describing this submission
+  # @param [Stellar::Homework] homework Stellar client scoped to the assignment
+  #     that this submission is for  
   def initialize(tr, homework)
     link = tr.css('a').find do |link|
       (/^\s*\d+\s*$/ =~ link.inner_text) && !(/grade/ =~ link['href'])
@@ -189,6 +192,12 @@ class Comment
   # Generic Stellar client used to make requests.
   attr_reader :client
   
+  # Creates a comment from a <table> in a Stellar submission details page.
+  #
+  # @param [Nokogiri::XML::Element] table a <table> element in a Stellar
+  #     submission details showing this comment
+  # @param [Stellar::Homework::Submission] submission Stellar client scoped to
+  #     the submission that was commented on
   def initialize(table, submission)
     @submission = submission
     @client = @submission.client
