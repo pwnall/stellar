@@ -64,6 +64,7 @@ DEPENDENCIES
   bundler (>= 1.0.21)
   highline (>= 1.6.2)
   jeweler (>= 1.6.4)
+  json
   mechanize (>= 2.0.2)
   nokogiri (>= 1.5.0)
   rcov
