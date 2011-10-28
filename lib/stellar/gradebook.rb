@@ -342,7 +342,7 @@ class Student
   def update_comment(text)
     page = @client.get @url
     grade_form = page.form_with :action => /detail/i
-    grade_form.textarea_with(:name => /comment/i).value = text
+    grade_form.field_with(:name => /comment/i).value = text
     grade_form.submit grade_form.button_with(:class => /save/)
     
     reload!

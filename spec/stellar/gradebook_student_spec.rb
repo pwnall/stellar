@@ -86,5 +86,20 @@ describe Stellar::Gradebook do
         student.grades['RSpec Test PS'].should == 41.59
       end
     end  
+
+    describe '#update_comment' do
+      before do
+        @old_comment = student.comment
+        student.update_comment 'RSpec Test Comment'
+      end
+      
+      after do
+        student.update_comment @old_comment
+      end
+      
+      it 'should store the right comment' do
+        student.comment.should == 'RSpec Test Comment'
+      end
+    end  
   end
 end
