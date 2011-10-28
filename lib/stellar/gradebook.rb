@@ -305,7 +305,7 @@ class Student
     @input_names = {} 
     page.css('.gradeTable tbody tr').each do |tr|
       name = tr.css('a[href*="assignment"]').inner_text
-      input_field = tr.css('input[type="text"][name*=points]')
+      input_field = tr.css('input[type="text"][name*="points"]').first
       @input_names[name] = input_field['name']
       @grades[name] = input_field['value'] && input_field['value'].to_f
     end

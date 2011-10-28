@@ -11,6 +11,9 @@ describe Stellar::Gradebook do
     @assignment.delete!
   end
   
+  let(:test_name) { 'Christianne Swartz' }
+  let(:test_email) { 'ude.tim@ytsirhc'.reverse }
+  
   describe '#students' do
     describe '#all' do
       let(:all) { @gradebook.students.all }
@@ -26,9 +29,6 @@ describe Stellar::Gradebook do
       end
     end
     
-    let(:test_name) { 'Christianne Swartz' }
-    let(:test_email) { 'ude.tim@ytsirhc'.reverse }
-
     shared_examples_for 'a student query' do
       it 'should return a student' do
         student.should be_kind_of(Stellar::Gradebook::Student)
@@ -54,5 +54,37 @@ describe Stellar::Gradebook do
 
       it_should_behave_like 'a student query'
     end
+  end
+  
+  describe Stellar::Gradebook::Student do
+    let(:student) { @gradebook.students.named test_name }
+
+    describe '#grades' do
+      let(:grades) { student.grades }
+      
+      it 'should have a score for the test assignment' do
+        grades.should have_key('RSpec Test PS')
+      end
+
+      it 'should have an empty score for the test assignment' do
+        grades['RSpec Test PS'].should be_nil
+      end
+    end
+    
+    describe '#comment' do
+      it 'should be some string' do
+        student.comment.should be_kind_of(String)
+      end
+    end
+    
+    describe '#update_grades' do
+      before do
+        student.update_grades 'RSpec Test PS' => 41.59
+      end
+      
+      it 'should store the right grade' do
+        student.grades['RSpec Test PS'].should == 41.59
+      end
+    end  
   end
 end
