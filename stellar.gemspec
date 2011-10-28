@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "stellar"
-  s.version = "0.1.1"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Victor Costan"]
-  s.date = "2011-10-16"
+  s.date = "2011-10-28"
   s.description = "So we don't have to put up with Stellar's craptastic ui"
   s.email = "victor@costan.us"
   s.extra_rdoc_files = [
@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
     "lib/stellar/auth.rb",
     "lib/stellar/client.rb",
     "lib/stellar/courses.rb",
+    "lib/stellar/gradebook.rb",
     "lib/stellar/homework.rb",
     "lib/stellar/mitca.crt",
     "spec/fixtures/.gitkeep",
@@ -37,6 +38,8 @@ Gem::Specification.new do |s|
     "spec/stellar/auth_spec.rb",
     "spec/stellar/client_spec.rb",
     "spec/stellar/courses_spec.rb",
+    "spec/stellar/gradebook_spec.rb",
+    "spec/stellar/gradebook_student_spec.rb",
     "spec/stellar/homework_spec.rb",
     "spec/stellar/homework_submissions_spec.rb",
     "spec/stellar_spec.rb",
@@ -65,6 +68,7 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<ruby-debug>, [">= 0"])
       s.add_development_dependency(%q<ruby-debug19>, [">= 0"])
       s.add_development_dependency(%q<highline>, [">= 1.6.2"])
+      s.add_development_dependency(%q<json>, [">= 0"])
     else
       s.add_dependency(%q<mechanize>, [">= 2.0.2"])
       s.add_dependency(%q<nokogiri>, [">= 1.5.0"])
@@ -78,6 +82,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<ruby-debug>, [">= 0"])
       s.add_dependency(%q<ruby-debug19>, [">= 0"])
       s.add_dependency(%q<highline>, [">= 1.6.2"])
+      s.add_dependency(%q<json>, [">= 0"])
     end
   else
     s.add_dependency(%q<mechanize>, [">= 2.0.2"])
@@ -92,6 +97,7 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<ruby-debug>, [">= 0"])
     s.add_dependency(%q<ruby-debug19>, [">= 0"])
     s.add_dependency(%q<highline>, [">= 1.6.2"])
+    s.add_dependency(%q<json>, [">= 0"])
   end
 end
 
