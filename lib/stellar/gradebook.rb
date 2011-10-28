@@ -305,9 +305,10 @@ class Student
     @input_names = {} 
     page.css('.gradeTable tbody tr').each do |tr|
       name = tr.css('a[href*="assignment"]').inner_text
-      input_field = tr.css('input[type="text"][name*="points"]').first
+      input_field = tr.css('input[type="text"][name*="oints"]').first
       @input_names[name] = input_field['name']
-      @grades[name] = input_field['value'] && input_field['value'].to_f
+      @grades[name] = input_field['value'].empty? ? nil :
+          input_field['value'].to_f
     end
     @comment = page.css('textarea[name*="comment"]').inner_text
     
@@ -327,7 +328,7 @@ class Student
       unless input_name = @input_names[assignment_name]
         raise ArgumentError, "Invalid assignment #{assignment_name}"
       end
-      grade_form.input_with(:name => input_name).value = new_grade.to_s
+      grade_form.field_with(:name => input_name).value = new_grade.to_s
     end
     grade_form.submit grade_form.button_with(:class => /save/)
     
