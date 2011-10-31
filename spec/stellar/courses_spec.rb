@@ -25,10 +25,12 @@ describe Stellar::Courses do
 end
 
 describe Stellar::Course do
-  let(:six) { test_client.course("6.006", 2011, :fall) }
+  before :all do
+    @six = test_client.course("6.006", 2011, :fall)
+  end
   
   describe '#navigation' do
-    let(:nav) { six.navigation }
+    let(:nav) { @six.navigation }
     
     it 'should have a Gradebook link' do
       nav['Gradebook'].should be_kind_of(URI)
@@ -36,6 +38,10 @@ describe Stellar::Course do
 
     it 'should have a Homework link' do
       nav['Homework'].should be_kind_of(URI)
+    end
+
+    it 'should have a Membership link' do
+      nav['Membership'].should be_kind_of(URI)
     end
   end
 end

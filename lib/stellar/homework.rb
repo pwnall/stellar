@@ -83,10 +83,13 @@ class Submission
   # URL to the last file that the student submitted.
   attr_reader :file_url
   
+  # Submission time.
+  attr_reader :time
+  
   # Name of the student who authored this submission.
   attr_reader :name
   
-  # Email of the student who authorted this submission.
+  # Email of the student who authored this submission.
   attr_reader :email
 
   # Comments posted on this submission.
@@ -117,13 +120,20 @@ class Submission
     page = @client.get_nokogiri @url
 
     unless author_link = page.css('#content h4 a[href^="mailto:"]').first
-      raise ArgumentError, 'Invalud submission-listing <tr>'
+      raise ArgumentError, 'Invalid submission-listing <tr>'
     end
     @name = author_link.inner_text
     @email = author_link['href'].sub /^mailto:/, ''
     @file_url = page.css('#rosterBox a[href*="studentWork"]').map { |link|
       next nil unless link.inner_text == homework.name
       URI.join @url.to_s, link['href']
+    }.reject(&:nil?).first
+    @time = page.css('#rosterBox .instruction').map { |span|
+      unless span.css('strong').any? { |strong| /date/i =~ strong.inner_text }
+        next nil
+      end
+      time_string = span.inner_text.split(':', 2).last.strip
+      time = DateTime.parse(time_string + ' GMT-4').to_time
     }.reject(&:nil?).first
     
     @add_comment_url = URI.join @url.to_s,

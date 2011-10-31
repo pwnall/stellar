@@ -19,6 +19,6 @@ end
 
 class TestCredentialsCache
   def self.test_client
-    @__test_client ||= Stellar::Client.new.auth :kerberos => test_mit_kerberos  
+    @__test_client ||= Stellar::Client.new.auth :cert => test_mit_cert  
   end
 end

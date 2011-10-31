@@ -1,4 +1,5 @@
 # Standard library.
+require 'date'
 require 'json'
 require 'openssl'
 require 'uri'
@@ -23,3 +24,4 @@ require 'stellar/client.rb'
 require 'stellar/courses.rb'
 require 'stellar/gradebook.rb'
 require 'stellar/homework.rb'
+require 'stellar/members.rb'

@@ -23,8 +23,8 @@ class Gradebook
     @url = course.navigation['Gradebook']
     
     page = @client.get_nokogiri @url
-    @navigation = Hash[page.css('#toolBox.dashboard dd a').map { |link|
-      [link.inner_text, URI.join(page.url, link['href'])]
+    @navigation = Hash[page.css('#toolBox dd a').map { |link|
+      [link.inner_text.strip, URI.join(page.url, link['href'])]
     }]
   end
 

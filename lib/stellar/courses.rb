@@ -99,7 +99,7 @@ class Course
       raise ArgumentError, "#{course_url} is not a course page"
     end
     @navigation = Hash[navbar_elems.first.css('a').map do |link|
-      [link.inner_text, URI.join(course_page.url, link['href'])]
+      [link.inner_text.strip, URI.join(course_page.url, link['href'])]
     end]
   end
   
@@ -111,6 +111,11 @@ class Course
   # Client scoped to the course's Gradebook module.
   def gradebook
     @gradebook ||= Stellar::Gradebook.new self
+  end
+
+  # Client scoped to the course's Members module.
+  def members
+    @members ||= Stellar::Members.new self
   end
 end  # class Stellar::Course
 

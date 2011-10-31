@@ -14,12 +14,15 @@ describe Stellar::Homework::Submission do
   it "should have the author's email" do
     one.email.reverse.should == 'ude.tim@ytsirhc'
   end
+  it 'should have a submission time' do
+    one.time.to_s.should == '2011-09-15 19:55:00 -0400'
+  end
   it 'should have a submission URL' do
     one.file_url.should be_kind_of(URI)
   end
   it 'should have the right bits in the submission' do
     one.file_data.should match(/\% 6\.006/)
-  end  
+  end
   
   it 'should have at least one feedback comment' do
     one.comments.should have_at_least(1).comment
