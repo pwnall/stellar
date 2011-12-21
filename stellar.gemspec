@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "stellar"
-  s.version = "0.3.0"
+  s.version = "0.3.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Victor Costan"]
-  s.date = "2011-10-31"
+  s.date = "2011-12-21"
   s.description = "So we don't have to put up with Stellar's craptastic ui"
   s.email = "victor@costan.us"
   s.extra_rdoc_files = [
@@ -51,14 +51,14 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/pwnall/stellar"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.11"
+  s.rubygems_version = "1.8.12"
   s.summary = "Automated access to MIT's Stellar data"
 
   if s.respond_to? :specification_version then
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<mechanize>, [">= 2.0.2"])
+      s.add_runtime_dependency(%q<mechanize>, [">= 2.1"])
       s.add_runtime_dependency(%q<nokogiri>, [">= 1.5.0"])
       s.add_development_dependency(%q<rdoc>, [">= 3.9.4"])
       s.add_development_dependency(%q<rspec>, [">= 2.6.0"])
@@ -72,7 +72,7 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<highline>, [">= 1.6.2"])
       s.add_development_dependency(%q<json>, [">= 0"])
     else
-      s.add_dependency(%q<mechanize>, [">= 2.0.2"])
+      s.add_dependency(%q<mechanize>, [">= 2.1"])
       s.add_dependency(%q<nokogiri>, [">= 1.5.0"])
       s.add_dependency(%q<rdoc>, [">= 3.9.4"])
       s.add_dependency(%q<rspec>, [">= 2.6.0"])
@@ -87,7 +87,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<json>, [">= 0"])
     end
   else
-    s.add_dependency(%q<mechanize>, [">= 2.0.2"])
+    s.add_dependency(%q<mechanize>, [">= 2.1"])
     s.add_dependency(%q<nokogiri>, [">= 1.5.0"])
     s.add_dependency(%q<rdoc>, [">= 3.9.4"])
     s.add_dependency(%q<rspec>, [">= 2.6.0"])
