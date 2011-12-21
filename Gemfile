@@ -1,7 +1,7 @@
 source :rubygems
 
 # Add dependencies required to use your gem here.
-gem 'mechanize', '>= 2.1.pre.1'
+gem 'mechanize', '>= 2.1'
 gem 'nokogiri', '>= 1.5.0'
 
 

@@ -17,7 +17,8 @@ class Client
   # New Mechanize instance.
   def mech(&block)
     m = Mechanize.new do |m|
-      # m.ca_file = mitca_path
+      m.cert_store = OpenSSL::X509::Store.new
+      m.cert_store.add_file mitca_path
       m.user_agent_alias = 'Linux Firefox'
       yield m if block
       m
