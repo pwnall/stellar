@@ -18,7 +18,7 @@ pkg
 spec/fixtures/kerberos.*
 spec/fixtures/mit_cert.*
 
-# Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore: 
+# Have editor/IDE/OS specific files you need to ignore? Consider using a global gitignore:
 #
 # * Create a file at ~/.gitignore
 # * Include files you want ignored
@@ -43,7 +43,7 @@ spec/fixtures/mit_cert.*
 #.\#*
 
 # For vim:
-#*.swp
+*.sw*
 
 # For redcar:
 #.redcar
